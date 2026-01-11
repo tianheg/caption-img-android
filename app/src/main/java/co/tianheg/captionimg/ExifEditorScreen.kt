@@ -14,9 +14,9 @@ import androidx.exifinterface.media.ExifInterface
 
 @Composable
 fun ExifEditorScreen(
-    uri: Uri?,
+    @Suppress("UNUSED_PARAMETER") uri: Uri?,
     exifData: Map<String, String>,
-    onDescriptionChange: (String) -> Unit,
+    @Suppress("UNUSED_PARAMETER") onDescriptionChange: (String) -> Unit,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
