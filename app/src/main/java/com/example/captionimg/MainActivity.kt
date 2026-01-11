@@ -27,6 +27,16 @@ class MainActivity : ComponentActivity() {
             if (uri != null) {
                 // Single image picked
                 if (fileManager.isImageFile(uri)) {
+                    // Take persistent permissions
+                    try {
+                        contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    
                     val fileName = fileManager.getFileName(uri)
                     val description = exifHandler.readImageDescription(uri) ?: ""
                     selectedImageUri = uri
@@ -100,8 +110,10 @@ class MainActivity : ComponentActivity() {
         ImageListScreen(
             images = imageList,
             onAddImage = {
-                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
                     type = "image/*"
+                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 }
                 imagePickerLauncher.launch(intent)
             },

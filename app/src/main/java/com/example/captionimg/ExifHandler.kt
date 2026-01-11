@@ -56,8 +56,13 @@ class ExifHandler(private val context: Context) {
     fun updateImageDescription(uri: Uri, description: String): Boolean {
         return try {
             // For content URIs, we need to copy to a temp file, modify, and copy back
-            val inputStream = context.contentResolver.openInputStream(uri) ?: return false
-            val tempFile = File.createTempFile("temp_img", null, context.cacheDir)
+            val inputStream = context.contentResolver.openInputStream(uri)
+            if (inputStream == null) {
+                android.util.Log.e("ExifHandler", "Failed to open input stream for URI: $uri")
+                return false
+            }
+            
+            val tempFile = File.createTempFile("temp_img", ".jpg", context.cacheDir)
 
             // Copy original to temp file
             inputStream.use { input ->
@@ -72,15 +77,25 @@ class ExifHandler(private val context: Context) {
             exif.saveAttributes()
 
             // Copy modified temp file back to original
+            val outputStream = context.contentResolver.openOutputStream(uri, "wt")
+            if (outputStream == null) {
+                android.util.Log.e("ExifHandler", "Failed to open output stream for URI: $uri. Check write permissions.")
+                tempFile.delete()
+                return false
+            }
+            
             tempFile.inputStream().use { input ->
-                context.contentResolver.openOutputStream(uri)?.use { output ->
+                outputStream.use { output ->
                     input.copyTo(output)
+                    output.flush()
                 }
             }
 
             tempFile.delete()
+            android.util.Log.d("ExifHandler", "Successfully updated description for URI: $uri")
             true
         } catch (e: Exception) {
+            android.util.Log.e("ExifHandler", "Error updating image description", e)
             e.printStackTrace()
             false
         }
