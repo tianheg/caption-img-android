@@ -1,0 +1,3 @@
+-keep class androidx.exifinterface.** { *; }
+-keep class coil.** { *; }
+-dontwarn coil.**
