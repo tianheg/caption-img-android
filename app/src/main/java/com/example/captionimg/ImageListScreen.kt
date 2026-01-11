@@ -1,4 +1,4 @@
-package com.example.captionimg
+package co.tianheg.captionimg
 
 import android.net.Uri
 import androidx.compose.foundation.background

@@ -1,4 +1,4 @@
-package com.example.captionimg.ui.theme
+package co.tianheg.captionimg.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

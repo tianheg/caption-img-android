@@ -1,4 +1,4 @@
-package com.example.captionimg
+package co.tianheg.captionimg
 
 import android.content.Intent
 import android.net.Uri
@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.exifinterface.media.ExifInterface
-import com.example.captionimg.ui.theme.CaptionImgTheme
+import co.tianheg.captionimg.ui.theme.CaptionImgTheme
 
 class MainActivity : ComponentActivity() {
 

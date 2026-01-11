@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.captionimg"
+    namespace = "co.tianheg.captionimg"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.captionimg"
+        applicationId = "co.tianheg.captionimg"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
