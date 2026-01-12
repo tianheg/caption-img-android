@@ -1,59 +1,54 @@
 package co.tianheg.captionimg
 
-import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.exifinterface.media.ExifInterface
 
+/**
+ * XMP 描述编辑对话框
+ */
 @Composable
-fun ExifEditorScreen(
-    @Suppress("UNUSED_PARAMETER") uri: Uri?,
-    exifData: Map<String, String>,
-    @Suppress("UNUSED_PARAMETER") onDescriptionChange: (String) -> Unit,
+fun DescriptionEditorDialog(
+    initialDescription: String,
     onSave: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var description by remember { mutableStateOf(exifData[ExifInterface.TAG_IMAGE_DESCRIPTION] ?: "") }
+    var description by remember(initialDescription) {
+        mutableStateOf(initialDescription.takeIf { it != "??" } ?: "")
+    }
+
     var isSaving by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Image Description") },
+        title = { Text("编辑图片描述") },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                Text("Current EXIF Data:", style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                exifData.forEach { (tag, value) ->
-                    Text(
-                        "$tag: $value",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(4.dp)
-                    )
-                }
-
+                Text(
+                    "输入图片描述（仅保存到 XMP，支持中文和所有 Unicode 字符）:",
+                    style = MaterialTheme.typography.bodySmall
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                TextField(
+                OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Image Description") },
+                    label = { Text("图片描述") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 100.dp),
-                    maxLines = 5,
-                    enabled = !isSaving
+                        .heightIn(min = 120.dp),
+                    maxLines = 10,
+                    enabled = !isSaving,
+                    placeholder = { Text("在此输入说明文字，支持中文...") },
+                    supportingText = { Text("当前字数: ${description.length}") }
                 )
             }
         },
@@ -67,12 +62,12 @@ fun ExifEditorScreen(
             ) {
                 Icon(Icons.Filled.Save, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Save")
+                Text("保存")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text("Cancel")
+                Text("取消")
             }
         }
     )

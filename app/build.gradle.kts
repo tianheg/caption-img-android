@@ -86,9 +86,8 @@ dependencies {
     
     // File handling
     implementation("androidx.activity:activity-ktx:1.8.0")
-    
-    // EXIF handling
-    implementation("androidx.exifinterface:exifinterface:1.3.6")
+
+    // XMP handling is implemented internally
     
     // Image handling
     implementation("io.coil-kt:coil-compose:2.5.0")
@@ -96,7 +95,7 @@ dependencies {
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

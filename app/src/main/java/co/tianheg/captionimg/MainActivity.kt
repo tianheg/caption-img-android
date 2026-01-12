@@ -1,6 +1,8 @@
 package co.tianheg.captionimg
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -8,14 +10,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
-import androidx.exifinterface.media.ExifInterface
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import co.tianheg.captionimg.ui.theme.CaptionImgTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var exifHandler: ExifHandler
+    private lateinit var xmpHandler: XmpHandler
     private lateinit var fileManager: FileManager
     private lateinit var imagePickerManager: ImagePickerManager
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Logger.init(this)
+        }
+    }
 
     private val imagePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -37,12 +49,13 @@ class MainActivity : ComponentActivity() {
                         e.printStackTrace()
                     }
                     
-                    val fileName = fileManager.getFileName(uri)
-                    val description = exifHandler.readImageDescription(uri) ?: ""
-                    selectedImageUri = uri
-                    currentImageItem = ImageItem(uri, fileName, description)
-                    exifDataMap = exifHandler.readAllExifData(uri)
-                    showExifEditor = true
+                    lifecycleScope.launch {
+                        val fileName = fileManager.getFileName(uri)
+                        val description = xmpHandler.readDescription(uri) ?: ""
+                        selectedImageUri = uri
+                        currentImageItem = ImageItem(uri, fileName, description)
+                        showDescriptionEditor = true
+                    }
                 } else {
                     Toast.makeText(this, "Please select an image file", Toast.LENGTH_SHORT).show()
                 }
@@ -52,14 +65,24 @@ class MainActivity : ComponentActivity() {
 
     private var selectedImageUri by mutableStateOf<Uri?>(null)
     private var currentImageItem by mutableStateOf<ImageItem?>(null)
-    private var exifDataMap by mutableStateOf<Map<String, String>>(emptyMap())
     private var imageList by mutableStateOf<List<ImageItem>>(emptyList())
-    private var showExifEditor by mutableStateOf(false)
+    private var showDescriptionEditor by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        exifHandler = ExifHandler(this)
+        // 请求存储权限用于日志记录
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        } else {
+            Logger.init(this)
+        }
+
+        xmpHandler = XmpHandler(this)
         fileManager = FileManager(this)
         imagePickerManager = ImagePickerManager(this) {}
 
@@ -72,36 +95,35 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun MainScreen() {
-        if (showExifEditor && selectedImageUri != null) {
-            ExifEditorScreen(
-                uri = selectedImageUri,
-                exifData = exifDataMap,
-                onDescriptionChange = { /* Handle description change */ },
+        val scope = rememberCoroutineScope()
+        
+        if (showDescriptionEditor && selectedImageUri != null) {
+            DescriptionEditorDialog(
+                initialDescription = currentImageItem?.description ?: "",
                 onSave = { description ->
-                    val success = exifHandler.updateImageDescription(selectedImageUri!!, description)
-                    if (success) {
-                        val updatedItem = currentImageItem?.copy(description = description)
-                        if (updatedItem != null) {
-                            imageList = imageList.map {
-                                if (it.uri == selectedImageUri) updatedItem else it
+                    scope.launch {
+                        val resultUri = xmpHandler.updateDescription(selectedImageUri!!, description)
+                        if (resultUri != null) {
+                            val finalUri = resultUri
+                            val updatedItem = currentImageItem?.copy(description = description, uri = finalUri)
+
+                            if (updatedItem != null) {
+                                imageList = imageList.map {
+                                    if (it.uri == selectedImageUri) updatedItem else it
+                                }
                             }
+
+                            selectedImageUri = finalUri
+                            currentImageItem = updatedItem
+                            showDescriptionEditor = false
+                            Toast.makeText(this@MainActivity, "Description updated successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to update description", Toast.LENGTH_SHORT).show()
                         }
-                        showExifEditor = false
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Description updated successfully",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Failed to update description",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
                 },
                 onDismiss = {
-                    showExifEditor = false
+                    showDescriptionEditor = false
                     selectedImageUri = null
                 }
             )
@@ -118,14 +140,17 @@ class MainActivity : ComponentActivity() {
                 imagePickerLauncher.launch(intent)
             },
             onEditImage = { imageItem ->
-                selectedImageUri = imageItem.uri
-                currentImageItem = imageItem
-                exifDataMap = exifHandler.readAllExifData(imageItem.uri)
-                showExifEditor = true
+                scope.launch {
+                    selectedImageUri = imageItem.uri
+                    // Refresh from XMP in case it changed externally.
+                    val latest = xmpHandler.readDescription(imageItem.uri) ?: imageItem.description
+                    currentImageItem = imageItem.copy(description = latest)
+                    showDescriptionEditor = true
+                }
             },
             onDeleteImage = { imageItem ->
                 imageList = imageList.filter { it.uri != imageItem.uri }
-                Toast.makeText(this, "Image removed from list", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Image removed from list", Toast.LENGTH_SHORT).show()
             }
         )
     }

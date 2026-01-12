@@ -1,26 +1,22 @@
-# README for Caption Image - Android EXIF Editor App
+# CaptionImg (Android) — XMP Description Editor
 
 ## Overview
-Caption Image is an Android application that allows users to read and update EXIF metadata (specifically image descriptions) in various image formats including:
-- JPG/JPEG
-- PNG
-- WebP
-- GIF
-- BMP
-- HEIC/HEIF
+CaptionImg is an Android application that reads and updates an image's description using **JPEG XMP (APP1)**.
+
+The app is intentionally **XMP-only** for description storage.
 
 ## Features
 
 ### Core Functionality
-- **Read EXIF Data**: View all EXIF metadata from selected images
-- **Edit Description**: Update the image description (ImageDescription tag) in EXIF data
-- **Multiple Formats**: Support for JPEG, PNG, WebP, GIF, BMP, and HEIC formats
+- **Read Description**: Reads the description from JPEG XMP
+- **Edit Description**: Writes the description back to JPEG XMP (UTF-8)
+- **Unicode Friendly**: Works well for Chinese and all Unicode text
 - **Batch Operations**: Add multiple images and manage them in a list
 - **Real-time Preview**: View image thumbnails and current metadata
 
 ### UI Components
 - **Image List Screen**: Browse and manage selected images
-- **EXIF Editor Dialog**: View and edit image metadata
+- **Description Editor Dialog**: View and edit the XMP description
 - **Image Cards**: Display image thumbnails with current descriptions
 
 ## Project Structure
@@ -28,13 +24,14 @@ Caption Image is an Android application that allows users to read and update EXI
 ```
 app/
 ├── src/main/
-│   ├── java/com/example/captionimg/
-│   │   ├── MainActivity.kt           # Main activity and Compose UI state
-│   │   ├── ExifHandler.kt            # EXIF read/write operations
-│   │   ├── FileManager.kt            # File and URI management
-│   │   ├── ImagePickerManager.kt     # Image selection logic
-│   │   ├── ImageListScreen.kt        # List UI and data class
-│   │   ├── ExifEditorScreen.kt       # Editor dialog UI
+│   ├── java/co/tianheg/captionimg/
+│   │   ├── MainActivity.kt             # Main activity and Compose UI state
+│   │   ├── XmpHandler.kt               # XMP description read/write operations
+│   │   ├── JpegXmp.kt                  # Minimal JPEG APP1 XMP reader/writer
+│   │   ├── DescriptionEditorDialog.kt  # Editor dialog UI
+│   │   ├── FileManager.kt              # File and URI management
+│   │   ├── ImagePickerManager.kt       # Image selection logic
+│   │   ├── ImageListScreen.kt          # List UI and data class
 │   │   └── ui/theme/
 │   │       └── Theme.kt              # Material 3 theming
 │   ├── res/
@@ -65,7 +62,6 @@ gradle.properties                   # Gradle properties
 - Material Design 3 components
 
 ### Libraries
-- `androidx.exifinterface:exifinterface` - EXIF data handling
 - `io.coil-kt:coil-compose` - Image loading and display
 - `kotlinx-coroutines-android` - Async operations
 
@@ -96,19 +92,16 @@ Or use Android Studio to run it on an emulator or physical device.
 
 1. **Add Images**: Tap the '+' button in the top right to select images
 2. **View Details**: See image thumbnails and current descriptions in the list
-3. **Edit Metadata**: Tap the edit icon on any image card to open the EXIF editor
+3. **Edit Description**: Tap the edit icon on any image card
 4. **Update Description**: Modify the image description and tap "Save"
-5. **View All EXIF Data**: The editor displays all available EXIF tags
-6. **Remove Images**: Tap the delete icon to remove images from the list
+5. **Remove Images**: Tap the delete icon to remove images from the list
 
 ## Key Classes
 
-### ExifHandler
-Handles all EXIF read/write operations:
-- `readImageDescription()` - Get image description
-- `readAllExifData()` - Get all EXIF metadata
-- `updateImageDescription()` - Update description tag
-- `updateMultipleExifTags()` - Update multiple tags
+### XmpHandler
+Handles reading/writing the description via JPEG XMP:
+- `readDescription()` - Read description from XMP
+- `updateDescription()` - Write description to XMP
 
 ### FileManager
 Manages file operations:
@@ -122,32 +115,13 @@ Compose UI components:
 - `ImageItemCard()` - Individual image display
 - `ImageItem` - Data class for image info
 
-### ExifEditorScreen
-Dialog for editing metadata:
-- Displays current EXIF data
-- Text field for description editing
-- Save/Cancel buttons
+### DescriptionEditorDialog
+Dialog for editing the XMP description.
 
 ## Technical Notes
 
-### Supported Image Formats
-The app supports reading and writing EXIF data for:
-- JPEG/JPG - Full EXIF support
-- PNG - Limited EXIF support (via Exif orientation)
-- WebP - Basic EXIF support
-- GIF - Limited support
-- HEIC/HEIF - iOS format, limited support
-- BMP - Basic support
-
-### EXIF Tag Reference
-Common EXIF tags available:
-- `TAG_IMAGE_DESCRIPTION` - Image description
-- `TAG_MAKE` - Camera manufacturer
-- `TAG_MODEL` - Camera model
-- `TAG_DATETIME` - Date/time taken
-- `TAG_ARTIST` - Artist/photographer
-- `TAG_GPS_LATITUDE` - GPS latitude
-- `TAG_GPS_LONGITUDE` - GPS longitude
+### Supported Formats
+The current implementation targets **JPEG/JPG** because XMP is written into JPEG APP1 segments.
 
 ### Runtime Permissions
 The app uses the scoped storage API (Android 10+) with content URIs. For Android 13+, it requests `READ_MEDIA_IMAGES` instead of `READ_EXTERNAL_STORAGE`.
@@ -155,8 +129,7 @@ The app uses the scoped storage API (Android 10+) with content URIs. For Android
 ## Future Enhancements
 
 - Batch editing multiple images
-- Export/import EXIF data
-- Advanced EXIF tag editor
+- Export/import XMP description
 - Image information statistics
 - Search and filter capabilities
 - Metadata templates
@@ -165,7 +138,7 @@ The app uses the scoped storage API (Android 10+) with content URIs. For Android
 
 ## Troubleshooting
 
-### Can't modify EXIF data
+### Can't modify description
 - Ensure the app has write permissions
 - Some image files may be read-only
 - Try copying the image to a writable location
