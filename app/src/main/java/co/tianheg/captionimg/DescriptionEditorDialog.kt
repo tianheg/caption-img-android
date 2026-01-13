@@ -21,8 +21,6 @@ fun DescriptionEditorDialog(
         mutableStateOf(initialDescription.takeIf { it != "??" } ?: "")
     }
 
-    var isSaving by remember { mutableStateOf(false) }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("编辑图片描述") },
@@ -46,7 +44,7 @@ fun DescriptionEditorDialog(
                         .fillMaxWidth()
                         .heightIn(min = 120.dp),
                     maxLines = 10,
-                    enabled = !isSaving,
+                    enabled = true,
                     placeholder = { Text("在此输入说明文字，支持中文...") },
                     supportingText = { Text("当前字数: ${description.length}") }
                 )
@@ -55,10 +53,9 @@ fun DescriptionEditorDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    isSaving = true
                     onSave(description)
                 },
-                enabled = !isSaving
+                enabled = true
             ) {
                 Icon(Icons.Filled.Save, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
@@ -66,7 +63,7 @@ fun DescriptionEditorDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
+            TextButton(onClick = onDismiss, enabled = true) {
                 Text("取消")
             }
         }

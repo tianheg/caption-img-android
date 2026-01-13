@@ -63,7 +63,7 @@ fun ImageListScreen(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(images) { image ->
+                items(images, key = { it.uri }) { image ->
                     LaunchedEffect(image.uri) {
                         if (image.description.isEmpty()) {
                             onEnsureDescription(image)
