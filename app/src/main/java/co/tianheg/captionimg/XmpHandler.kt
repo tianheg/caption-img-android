@@ -2,6 +2,8 @@ package co.tianheg.captionimg
 
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.app.RecoverableSecurityException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -107,6 +109,9 @@ class XmpHandler(private val context: Context) {
 
                 if (verify) uri else null
             } catch (e: Exception) {
+                // Let callers handle permission recovery flows.
+                if (e is SecurityException) throw e
+                if (Build.VERSION.SDK_INT >= 29 && e is RecoverableSecurityException) throw e
                 Logger.log("更新 XMP 描述失败: $uri", e)
                 null
             }

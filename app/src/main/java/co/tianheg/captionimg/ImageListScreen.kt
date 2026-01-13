@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -24,6 +25,9 @@ import coil.compose.AsyncImage
 fun ImageListScreen(
     images: List<ImageItem>,
     onAddImage: () -> Unit,
+    onPickAlbums: () -> Unit,
+    onEnsureDescription: (ImageItem) -> Unit,
+    isDescriptionLoading: (Uri) -> Boolean,
     onEditImage: (ImageItem) -> Unit,
     onDeleteImage: (ImageItem) -> Unit
 ) {
@@ -31,6 +35,9 @@ fun ImageListScreen(
         TopAppBar(
             title = { Text("Image Caption Editor") },
             actions = {
+                IconButton(onClick = onPickAlbums) {
+                    Icon(Icons.Filled.PhotoLibrary, contentDescription = "Pick Albums")
+                }
                 IconButton(onClick = onAddImage) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Image")
                 }
@@ -57,8 +64,14 @@ fun ImageListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(images) { image ->
+                    LaunchedEffect(image.uri) {
+                        if (image.description.isEmpty()) {
+                            onEnsureDescription(image)
+                        }
+                    }
                     ImageItemCard(
                         image = image,
+                        descriptionLoading = isDescriptionLoading(image.uri),
                         onEdit = { onEditImage(image) },
                         onDelete = { onDeleteImage(image) }
                     )
@@ -71,6 +84,7 @@ fun ImageListScreen(
 @Composable
 fun ImageItemCard(
     image: ImageItem,
+    descriptionLoading: Boolean,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -108,13 +122,25 @@ fun ImageItemCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = image.description.takeIf { it.isNotEmpty() } ?: "No description",
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = image.description.takeIf { it.isNotEmpty() } ?: "No description",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (descriptionLoading) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             }
 
             Column(
